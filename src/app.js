@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import './app.css';
-import Points3DApp from './three/index';
+import Points3DApp from './three';
 
 class App extends Component {
   constructor(props) {
@@ -11,14 +11,19 @@ class App extends Component {
   }
   render() {
     return (
-      <div className="App">
-        <textarea onChange={this.onTextChange}></textarea>
+      <div className="controls">
+        <div className="textInput">
+          <textarea onChange={this.onTextChange}></textarea>
+        </div>
+        <div className="pointList">
+          <div></div>
+        </div>
       </div>
     );
   }
 
   onTextChange(e) {
-    this.threeApp.parsePoints(e.target.value);
+    // this.threeApp.parsePoints(e.target.value);
   }
 }
 

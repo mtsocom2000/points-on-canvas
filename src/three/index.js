@@ -1,4 +1,4 @@
-import { extendPaths, nearlyEqual } from './utils';
+import { extendPaths, nearlyEqual } from './polygon-util';
 import ThreeDCanvas from './threed-canvas';
 
 export default class Points3DApp {
@@ -19,6 +19,8 @@ export default class Points3DApp {
 
     document.addEventListener('mousedown', this.onMouseDown, false);
     document.addEventListener('mousemove', this.onMouseMove, false);
+
+    this.testPathFunc();
   }
 
   parsePoints(textStr) {
@@ -53,21 +55,21 @@ export default class Points3DApp {
   }
 
   testPathFunc() {
-    const mycanvas = document.createElement('canvas');
-    mycanvas.id = 'mycanvas';
-    document.body.appendChild(mycanvas);
-    mycanvas.width = 1280;
-    mycanvas.height = 960;
-    mycanvas.style.position = 'absolute';
-    mycanvas.style.left = 0;
-    mycanvas.style.top = 0;
-    mycanvas.style.width = '1280px';
-    mycanvas.style.height = '960px';
-    mycanvas.style.background = 'aliceblue';
-    mycanvas.style.zIndex = 1000;
-    document.body.appendChild(mycanvas);
+    // const mycanvas = document.createElement('canvas');
+    // mycanvas.id = 'mycanvas';
+    // document.body.appendChild(mycanvas);
+    // mycanvas.width = 1280;
+    // mycanvas.height = 960;
+    // mycanvas.style.position = 'absolute';
+    // mycanvas.style.left = 0;
+    // mycanvas.style.top = 0;
+    // mycanvas.style.width = '1280px';
+    // mycanvas.style.height = '960px';
+    // mycanvas.style.background = 'aliceblue';
+    // mycanvas.style.zIndex = 1000;
+    // document.body.appendChild(mycanvas);
 
-    const context = mycanvas.getContext('2d');
+    // const context = mycanvas.getContext('2d');
 
     const pathsArray = [
       [
@@ -115,17 +117,22 @@ export default class Points3DApp {
         { x: 200, y: 500, },
       ],
     ];
-
-    pathsArray.forEach(paths => {
-      this.drawPath(paths, context);
+    pathsArray.forEach((path) => {
+      path.forEach((pos) => {
+        this.mCanvas.createPaths(pos);
+      });
+      this.mCanvas.closePath();
     });
+    // pathsArray.forEach(paths => {
+    //   this.drawPath(paths, context);
+    // });
 
-    context.strokeStyle = 'blue';
+    // context.strokeStyle = 'blue';
 
-    pathsArray.forEach(paths => {
-      let newPtahs = extendPaths(paths, 20);
-      this.drawPath(newPtahs, context);
-    });
+    // pathsArray.forEach(paths => {
+    //   let newPtahs = extendPaths(paths, 20);
+    //   this.drawPath(newPtahs, context);
+    // });
   }
 
   drawPath(paths, context) {

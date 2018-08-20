@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+const TrackballControls = require('three-trackballcontrols');
 
 export default class ThreeDCanvas {
   constructor(options) {
@@ -18,6 +19,13 @@ export default class ThreeDCanvas {
     this.mFirstPoint = null;
     this.mLastPoint = null;
     this.highLightObjec = null;
+
+    this.mBoundingBox = {
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+    }
   }
 
   start() {
@@ -47,6 +55,13 @@ export default class ThreeDCanvas {
     this.mCamera.position.y = 0;
     this.mCamera.position.z = 200;
     this.mCamera.lookAt(this.mScene.position);
+
+    this.mTrackballControl = new TrackballControls(this.mCamera);
+    this.mTrackballControl.zoomSpeed = 1.2;
+    this.mTrackballControl.panSpeed = 0.8;
+    this.mTrackballControl.noZoom = false;
+    this.mTrackballControl.noPan = false;
+    this.mTrackballControl.staticMoving = true;
   
     this.mRender = new THREE.WebGLRenderer({ antialias: true });
     this.mRender.setClearColor(new THREE.Color(0xffffff, 0.8));
@@ -153,12 +168,38 @@ export default class ThreeDCanvas {
       this.mScene.add(line);
     }
 
+    if (!this.mFirstPoint) {
+      this.mFirstPoint = pos;
+    }
     this.mLastPoint = sphere.position;
 
     // const points = [];
     // const geometry = new THREE.BufferGeometry().setFromPoints(points);
     // var line = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0xffffff, opacity: 0.5 } ) );
     // scene.add( line );
+
+    // extend boundingbox
+    this.updateBoundingBox(pos);
+  }
+
+  updateBoundingBox(pos) {
+    if (pos.x < this.mBoundingBox.left) {
+      this.mBoundingBox.left = pos.x;
+    } else if (pos.x > this.mBoundingBox.right) {
+      this.mBoundingBox.right = pos.x;
+    }
+    if (pos.y < this.mBoundingBox.bottom) {
+      this.mBoundingBox.bottom = pos.y;
+    } else if (pos.y > this.mBoundingBox.top) {
+      this.mBoundingBox.top = pos.y;
+    }
+
+    this.mCamera.left = this.mBoundingBox.left + 200;
+    this.mCamera.right = this.mBoundingBox.right + 200;
+    this.mCamera.top = this.mBoundingBox.top + 200;
+    this.mCamera.bottom = this.mBoundingBox.bottom + 200;
+
+    this.mCamera.updateProjectionMatrix();
   }
 
   closePath() {
@@ -176,6 +217,8 @@ export default class ThreeDCanvas {
   }
 
   render() {
+    this.mTrackballControl.update();
+
     requestAnimationFrame(this.render);
     this.mRender.render(this.mScene, this.mCamera);
   }
