@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 const TrackballControls = require('three-trackballcontrols');
-
+const shortid = require('shortid');
 export default class ThreeDCanvas {
   constructor(options) {
     this.mScene = null;
@@ -26,6 +26,10 @@ export default class ThreeDCanvas {
       left: 0,
       right: 0,
     }
+
+    this.mCanvasRatio = 1280 / 720;
+
+    this.mPointsCache = {};
   }
 
   start() {
@@ -42,12 +46,11 @@ export default class ThreeDCanvas {
 
     //this.mCamera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 1, 10000);
     // const aspect = window.innerWidth / window.innerHeight;
-    const ratio = 1 / 2;
     this.mCamera = new THREE.OrthographicCamera(
-      ratio * this.mOptions.domElement.clientWidth / -2,
-      ratio * this.mOptions.domElement.clientWidth / 2,
-      ratio * this.mOptions.domElement.clientHeight / 2,
-      ratio * this.mOptions.domElement.clientHeight / -2,
+      this.mOptions.domElement.clientWidth / -2,
+      this.mOptions.domElement.clientWidth / 2,
+      this.mOptions.domElement.clientHeight / 2,
+      this.mOptions.domElement.clientHeight / -2,
       1,
       500);
     // position and point the camera to the center of the scene
@@ -56,12 +59,12 @@ export default class ThreeDCanvas {
     this.mCamera.position.z = 200;
     this.mCamera.lookAt(this.mScene.position);
 
-    this.mTrackballControl = new TrackballControls(this.mCamera);
-    this.mTrackballControl.zoomSpeed = 1.2;
-    this.mTrackballControl.panSpeed = 0.8;
-    this.mTrackballControl.noZoom = false;
-    this.mTrackballControl.noPan = false;
-    this.mTrackballControl.staticMoving = true;
+    // this.mTrackballControl = new TrackballControls(this.mCamera);
+    // this.mTrackballControl.zoomSpeed = 1.2;
+    // this.mTrackballControl.panSpeed = 0.8;
+    // this.mTrackballControl.noZoom = false;
+    // this.mTrackballControl.noPan = false;
+    // this.mTrackballControl.staticMoving = true;
   
     this.mRender = new THREE.WebGLRenderer({ antialias: true });
     this.mRender.setClearColor(new THREE.Color(0xffffff, 0.8));
@@ -79,7 +82,7 @@ export default class ThreeDCanvas {
     this.mPlanGeometry = new THREE.BoxBufferGeometry(20000, 20000, 2);
 
     this.mPlane = new THREE.Mesh(this.mPlanGeometry, new THREE.MeshBasicMaterial({
-      color: 0x000000,
+      color: 0x090966,
       opacity: 0.5,
       transparent: true,
     }));
@@ -151,12 +154,18 @@ export default class ThreeDCanvas {
   }
 
   createPaths(pos) {
-    const sphereGeometry = new THREE.SphereGeometry(2, 10, 10); 
-    const sphereMaterial = new THREE.MeshLambertMaterial({color: 0x8888ff}); 
+    const r = 2;
+    const sphereGeometry = new THREE.SphereGeometry(r, 10, 10); 
+    const sphereMaterial = new THREE.MeshBasicMaterial({color: 0x8888ff}); 
     const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
     sphere.position.set(pos.x, pos.y, 0);
-    sphere.tag = 'sphere';
+    sphere.tag = {
+      id: shortid.generate(),
+      value: pos,
+      class: 'sphere',
+    };
     this.mScene.add(sphere);
+    this.mPointsCache[sphere.tag.id] = sphere;
 
     if (this.mLastPoint) {
       const lineMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 1 });
@@ -194,10 +203,37 @@ export default class ThreeDCanvas {
       this.mBoundingBox.top = pos.y;
     }
 
-    this.mCamera.left = this.mBoundingBox.left + 200;
-    this.mCamera.right = this.mBoundingBox.right + 200;
-    this.mCamera.top = this.mBoundingBox.top + 200;
-    this.mCamera.bottom = this.mBoundingBox.bottom + 200;
+    let height = this.mBoundingBox.top - this.mBoundingBox.bottom;
+    let heightCenter = (this.mBoundingBox.top + this.mBoundingBox.bottom) / 2;
+    let width = this.mBoundingBox.right - this.mBoundingBox.left;
+    let widthCenter = (this.mBoundingBox.right + this.mBoundingBox.left) / 2;
+    let ratio = width / height;
+    if (ratio > this.mCanvasRatio) {
+      height = width / this.mCanvasRatio;
+    } else {
+      width = height * this.mCanvasRatio;
+    }
+
+    // this.mCamera.left = widthCenter - width / 2;
+    // this.mCamera.right = widthCenter + width / 2;
+    // this.mCamera.top = heightCenter + height / 2;
+    // this.mCamera.bottom = heightCenter - height / 2;
+    this.mCamera.position.x = widthCenter;
+    this.mCamera.position.y = heightCenter;
+    this.mCamera.position.z = 10;
+    this.mCamera.lookAt({
+      x: widthCenter,
+      y: heightCenter,
+      z: this.mScene.position.z,
+    });
+
+    Object.values(this.mPointsCache).forEach((sphere) => {
+      if (this.mBoundingBox.right - this.mBoundingBox.left) {
+        sphere.geometry.dispose();
+        const r = (this.mBoundingBox.right - this.mBoundingBox.left) / 150;
+        sphere.geometry = new THREE.SphereGeometry(r, 10, 10);
+      }
+    });
 
     this.mCamera.updateProjectionMatrix();
   }
@@ -217,7 +253,7 @@ export default class ThreeDCanvas {
   }
 
   render() {
-    this.mTrackballControl.update();
+    //this.mTrackballControl.update();
 
     requestAnimationFrame(this.render);
     this.mRender.render(this.mScene, this.mCamera);
