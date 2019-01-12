@@ -25,7 +25,7 @@ export default class ThreeDCanvas {
       bottom: 0,
       left: 0,
       right: 0,
-    }
+    };
 
     this.mCanvasRatio = 1280 / 720;
 
@@ -81,7 +81,7 @@ export default class ThreeDCanvas {
 
     this.mPlanGeometry = new THREE.BoxBufferGeometry(20000, 20000, 2);
 
-    this.mPlane = new THREE.Mesh(this.mPlanGeometry, new THREE.MeshBasicMaterial({
+    this.mPlane = new THREE.Mesh(this.mPlanGeometry, new THREE.MeshStandardMaterial({
       color: 0x090966,
       opacity: 0.5,
       transparent: true,
@@ -156,7 +156,7 @@ export default class ThreeDCanvas {
   createPaths(pos) {
     const r = 2;
     const sphereGeometry = new THREE.SphereGeometry(r, 10, 10); 
-    const sphereMaterial = new THREE.MeshBasicMaterial({color: 0x8888ff}); 
+    const sphereMaterial = new THREE.MeshStandardMaterial({color: 0x8888ff}); 
     const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
     sphere.position.set(pos.x, pos.y, 0);
     sphere.tag = {
@@ -168,7 +168,7 @@ export default class ThreeDCanvas {
     this.mPointsCache[sphere.tag.id] = sphere;
 
     if (this.mLastPoint) {
-      const lineMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 1 });
+      const lineMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 10 });
       const lineGeometry = new THREE.Geometry();
       lineGeometry.vertices.push(this.mLastPoint);
       lineGeometry.vertices.push(sphere.position);
@@ -188,7 +188,7 @@ export default class ThreeDCanvas {
     // scene.add( line );
 
     // extend boundingbox
-    this.updateBoundingBox(pos);
+    // this.updateBoundingBox(pos);
   }
 
   updateBoundingBox(pos) {

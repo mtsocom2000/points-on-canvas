@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import './app.css';
-import Points2DApp from './canvas';
+// import Points3DApp from './three/index';
+import Points3DApp from './paper/index';
 
 class App extends Component {
   constructor(props) {
@@ -10,13 +11,25 @@ class App extends Component {
   render() {
     return (
       <div >
-        <canvas id="myCanvas" width="800" height="800"></canvas>
       </div>
     );
   }
   componentDidMount() {
-    this.threeApp = new Points2DApp(document.getElementById('myCanvas'));
-    this.threeApp.start();
+    this.app = new Points3DApp(document.getElementById('myCanvas'));
+    this.app.start([
+      {
+        x: -200, y: 200,
+      },
+      {
+        x: -200, y: -200,
+      },
+      {
+        x: 200, y: -200,
+      },
+      {
+        x: 200, y: 200,
+      },
+    ]);
   }
 }
 
