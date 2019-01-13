@@ -1,4 +1,5 @@
 import paper from 'paper';
+import { EditablePath } from './datamodel.js';
 
 export default class PaperCanvasApp {
   constructor(canvasElement) {
@@ -18,7 +19,7 @@ export default class PaperCanvasApp {
     };
 
     this._init();
-    this._sourcePath = null;
+    this._path = null;
   }
 
   _init() {
@@ -35,19 +36,12 @@ export default class PaperCanvasApp {
     // fist layer to display ruler
     this._createCoordinator(1024, 768);
 
-    // second layer to displlay path
+    // second layer to display path
     this._pathLayer = new paper.Layer();
-    // // Create a Paper.js Path to draw a line into it:
-    // var path = new paper.Path();
-    // // Give the stroke a color
-    // path.strokeColor = 'black';
-    // var start = new paper.Point(100, 100);
-    // // Move to start and draw a line from there
-    // path.moveTo(start);
-    // // Note that the plus operator on Point objects does not work
-    // // in JavaScript. Instead, we need to call the add() function:
-    // path.lineTo(start.add([200, -50]));
-    // // Draw the view now:
+
+    // third layerto display control points
+    this._pointLayer = new paper.Layer();
+
     // paper.view.draw();
   }
 
@@ -211,18 +205,14 @@ export default class PaperCanvasApp {
   }
 
   start(path) {
-    if (Array.isArray(path)) {
-      this._sourcePath = path.slice();
-      // manual close it
-      this._sourcePath.push(this._sourcePath[0]);
-    } else {
-      this._sourcePath = [];
-    }
-
-    this.display(this._sourcePath);
+    this.editablePath = new EditablePath(path);
+    this.refresh();
   }
 
-  display(sourcePath) {
+  refresh() {
+    this._pathLayer.activate();
+    this._pathLayer.removeChildren();
+    let sourcePath = this.editablePath.allRawPoints();
     for (let i = 0; i < sourcePath.length; i++) {
       let ptFrom = sourcePath[i];
       let ptTo = sourcePath[(i + 1) % sourcePath.length];
@@ -239,6 +229,9 @@ export default class PaperCanvasApp {
     }
 
     // point itself
+    this._pointLayer.activate();
+    this._pointLayer.removeChildren();
+    sourcePath = this.editablePath.allControlPoints();
     for (let i = 0; i < sourcePath.length; i++) {
       let pt = sourcePath[i];
       let myCircle = new paper.Path.Circle(this.toPaperPoint({
@@ -247,6 +240,7 @@ export default class PaperCanvasApp {
       }), 5);
       myCircle.fillColor = this._color.pointNormal;
       myCircle.tag = 'point';
+      myCircle.userData = pt.EditablePoint;
     }
   }
 
@@ -262,6 +256,16 @@ export default class PaperCanvasApp {
       this._selectItem = this._hoverItem;
       this._selectItem.fillColor = this._color.pointSelect;
       this._hoverItem = null;
+
+      // test func works...
+      if (this._selectItem.userData) {
+        this._selectItem.userData._test();
+        this.refresh();
+      }
+    } else {
+      // another test func
+      this.editablePath.testAddPt();
+      this.refresh();
     }
   }
 
@@ -291,5 +295,13 @@ export default class PaperCanvasApp {
       x: paperPoint.x - this._config.width / 2,
       y: paperPoint.y - this._config.height / 2,
     };
+  }
+
+  toPath() {
+    return this._path.map(p => p);
+  }
+
+  updatePoint() {
+
   }
 }
