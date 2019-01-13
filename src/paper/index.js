@@ -8,7 +8,7 @@ export default class PaperCanvasApp {
       coordinator: 'black',
       line: 'blue',
       pointNormal: 'blue',
-      pointSelect: 'green'
+      pointSelect: 'red'
     };
 
     this._config = {
@@ -81,51 +81,53 @@ export default class PaperCanvasApp {
     }));
     let htext = new paper.PointText(this.toPaperPoint({
       x: width / 2 - this._config.padding,
-      y: -20
+      y: 20
     }));
     htext.justification = 'center';
     htext.fillColor = this._color.coordinator;
     htext.content = 'x';
 
-    for (let dx = -100; dx > -width / 2 + this._config.padding; dx -= 100) {
+    for (let dx = -50; dx > -width / 2 + this._config.padding; dx -= 50) {
       // dx < width / 2 - this._config.padding;
       let dxText = new paper.PointText(this.toPaperPoint({
         x: dx,
-        y: -20
+        y: -25
       }));
       dxText.justification = 'center';
       dxText.fillColor = this._color.coordinator;
       dxText.content = dx;
 
       let path = new paper.Path();
+      let length = (dx % 100) === 0 ? 10 : 5;
       path.strokeColor = this._color.coordinator;
       path.add(this.toPaperPoint({
         x: dx,
-        y: -5,
+        y: -length,
       }));
       path.add(this.toPaperPoint({
         x: dx,
-        y: 5,
+        y: 0,
       }));
     }
-    for (let dx = 100; dx < width / 2 - this._config.padding; dx += 100) {
+    for (let dx = 50; dx < width / 2 - this._config.padding; dx += 50) {
       let dxText = new paper.PointText(this.toPaperPoint({
         x: dx,
-        y: -20
+        y: -25
       }));
       dxText.justification = 'center';
       dxText.fillColor = this._color.coordinator;
       dxText.content = dx;
 
       let path = new paper.Path();
+      let length = (dx % 100) === 0 ? 10 : 5;
       path.strokeColor = this._color.coordinator;
       path.add(this.toPaperPoint({
         x: dx,
-        y: -5,
+        y: -length,
       }));
       path.add(this.toPaperPoint({
         x: dx,
-        y: 5,
+        y: 0,
       }));
     }
 
@@ -164,43 +166,45 @@ export default class PaperCanvasApp {
     vtext.fillColor = this._color.coordinator;
     vtext.content = 'y';
 
-    for (let dy = -100; dy > -height / 2 + this._config.padding; dy -= 100) {
+    for (let dy = -50; dy > -height / 2 + this._config.padding; dy -= 50) {
       let dyText = new paper.PointText(this.toPaperPoint({
-        x: -20,
-        y: dy
+        x: -25,
+        y: dy - 4
       }));
       dyText.justification = 'center';
       dyText.fillColor = this._color.coordinator;
       dyText.content = dy;
 
       let path = new paper.Path();
+      let length = (dy % 100) === 0 ? 10 : 5;
       path.strokeColor = this._color.coordinator;
       path.add(this.toPaperPoint({
-        x: 5,
+        x: -length,
         y: dy,
       }));
       path.add(this.toPaperPoint({
-        x: 5,
+        x: 0,
         y: dy,
       }));
     }
-    for (let dy = 100; dy < height / 2 - this._config.padding; dy += 100) {
+    for (let dy = 50; dy < height / 2 - this._config.padding; dy += 50) {
       let dyText = new paper.PointText(this.toPaperPoint({
-        x: -20,
-        y: dy
+        x: -25,
+        y: dy - 4
       }));
       dyText.justification = 'center';
       dyText.fillColor = this._color.coordinator;
       dyText.content = dy;
 
       let path = new paper.Path();
+      let length = (dy % 100) === 0 ? 10 : 5;
       path.strokeColor = this._color.coordinator;
       path.add(this.toPaperPoint({
-        x: 5,
+        x: -length,
         y: dy,
       }));
       path.add(this.toPaperPoint({
-        x: 5,
+        x: 0,
         y: dy,
       }));
     }
@@ -240,19 +244,24 @@ export default class PaperCanvasApp {
       let myCircle = new paper.Path.Circle(this.toPaperPoint({
         x: pt.x,
         y: pt.y,
-      }), 10);
+      }), 5);
       myCircle.fillColor = this._color.pointNormal;
       myCircle.tag = 'point';
     }
   }
 
   onCanvasMouseDown(e) {
-    if (this._hoverItem) {
-      this._selectItem = this._hoverItem;
-      this._selectItem.fillColor = this._color.pointSelect;
-    } else if (this._selectItem) {
+    if (this._selectItem) {
       this._selectItem.fillColor = this._color.pointNormal;
       this._selectItem = null;
+    }
+
+    if (this._hoverItem) {
+      this._hoverItem.selected = false;
+
+      this._selectItem = this._hoverItem;
+      this._selectItem.fillColor = this._color.pointSelect;
+      this._hoverItem = null;
     }
   }
 
@@ -276,5 +285,11 @@ export default class PaperCanvasApp {
       pt.x + this._config.width / 2,
       -pt.y + this._config.height / 2);
   }
-}
 
+  toPathPoint(paperPoint) {
+    return {
+      x: paperPoint.x - this._config.width / 2,
+      y: paperPoint.y - this._config.height / 2,
+    };
+  }
+}
