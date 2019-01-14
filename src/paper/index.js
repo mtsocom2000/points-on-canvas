@@ -15,7 +15,7 @@ export default class PaperCanvasApp {
       textStyle: { size: 14, anchor: 'middle', fill: '#000' },
       pathStyle: { color: 'blue', width: 1, linecap: 'round' },
       pointStyle: 'blue',
-      pointSelectStyle: 'blue',
+      pointSelectStyle: { color: 'lightblue', width: 1, linecap: 'round' },
       pointR: 12,
     };
 
@@ -27,6 +27,8 @@ export default class PaperCanvasApp {
 
     this._init();
     this._path = null;
+
+    this._backupStyle = {};
   }
 
   _init() {
@@ -209,18 +211,29 @@ export default class PaperCanvasApp {
       const pointElement = this._svgDrawing.circle(this._color.pointR).fill(this._color.pointStyle);
       pointElement.move(circlePos.x - this._color.pointR / 2, circlePos.y - this._color.pointR / 2);
       pointElement.mouseout(e => this.onPointMouseOut(e));
-      pointElement.mouseover(e => this.onPointMouseMove(e));
-      pointElement.node.userData = pt;
+      pointElement.mouseover(e => this.onPointMouseOver(e));
+      pointElement.mousedown(e => this.onPointMouseDown(e));
+      pointElement.userData = pt;
     }
   }
 
   onPointMouseOut(e) {
-    console.log('onPointMouseOut ' + e.currentTarget.userData);
+    Object.keys(this._backupStyle).forEach((key) => {
+      e.currentTarget.style[key] = this._backupStyle[key];
+    });
+
   }
 
-  onPointMouseMove(e) {
+  onPointMouseOver(e) {
+    this._backupStyle = {};
+    this._backupStyle.fill = e.currentTarget.style.fill;
     e.currentTarget.style.fill = '#f06';
-    console.log('onPointMouseMove ' + e.currentTarget.userData);
+  }
+
+  onPointMouseDown(e) {
+    // e.currentTarget.instance.userData
+    e.currentTarget.instance.stroke({ color: 'blue', width: 3, linecap: 'round' });
+    e.currentTarget.instance.remove();
   }
 
   onCanvasMouseDown(e) {
