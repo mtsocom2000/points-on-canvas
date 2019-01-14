@@ -1,4 +1,4 @@
-import paper from 'paper';
+import SVG from 'svg.js';
 import { EditablePath } from './datamodel.js';
 
 export default class PaperCanvasApp {
@@ -9,7 +9,14 @@ export default class PaperCanvasApp {
       coordinator: 'black',
       line: 'blue',
       pointNormal: 'blue',
-      pointSelect: 'red'
+      pointSelect: 'red',
+      path: 'none',
+      lineStyle: { color: 'black', width: 1, linecap: 'round' },
+      textStyle: { size: 14, anchor: 'middle', fill: '#000' },
+      pathStyle: { color: 'blue', width: 1, linecap: 'round' },
+      pointStyle: 'blue',
+      pointSelectStyle: 'blue',
+      pointR: 12,
     };
 
     this._config = {
@@ -23,184 +30,147 @@ export default class PaperCanvasApp {
   }
 
   _init() {
-    paper.setup(this._originalCanvas);
-
-    paper.settings.hitTolerance = 10;
-    paper.settings.handleSize = 8;
-
-    this._tool = new paper.Tool();
-    this._tool.onMouseDown = this.onCanvasMouseDown.bind(this);
-    this._tool.onMouseMove = this.onCanvasMouseMove.bind(this);
-    this._tool.onMouseUp = this.onCanvasMouseUp.bind(this);
+    this._svgDrawing = SVG('myCanvas').size(this._config.width, this._config.height);
 
     // fist layer to display ruler
     this._createCoordinator(1024, 768);
-
-    // second layer to display path
-    this._pathLayer = new paper.Layer();
-
-    // third layerto display control points
-    this._pointLayer = new paper.Layer();
-
-    // paper.view.draw();
   }
 
   _createCoordinator(width, height) {
-    let hpath = new paper.Path();
-    hpath.strokeColor = this._color.coordinator;
-    hpath.strokeWidth = 1;
-    hpath.add(this.toPaperPoint({
+    let leftX = this.toSVGPoint({
       x: -width / 2 + this._config.padding,
       y: 0,
-    }));
-    hpath.add(this.toPaperPoint({
+    });
+    let rightX = this.toSVGPoint({
       x: width / 2 - this._config.padding - 18,
       y: 0,
-    }));
-    hpath.add(this.toPaperPoint({
+    });
+    this._svgDrawing.line(leftX.x, leftX.y, rightX.x, rightX.y).stroke(this._color.lineStyle);
+
+    let xRightUp = this.toSVGPoint({
       x: width / 2 - this._config.padding - 18,
       y: 6,
-    }));
-    hpath.add(this.toPaperPoint({
-      x: width / 2 - this._config.padding,
-      y: 0,
-    }));
-    hpath.add(this.toPaperPoint({
+    });
+    let xRightDown = this.toSVGPoint({
       x: width / 2 - this._config.padding - 18,
       y: -6,
-    }));
-    hpath.add(this.toPaperPoint({
-      x: width / 2 - this._config.padding - 18,
-      y: 6,
-    }));
-    let htext = new paper.PointText(this.toPaperPoint({
+    });
+    let xRightArrow = this.toSVGPoint({
       x: width / 2 - this._config.padding,
-      y: 20
-    }));
-    htext.justification = 'center';
-    htext.fillColor = this._color.coordinator;
-    htext.content = 'x';
+      y: 0,
+    });
+    this._svgDrawing.polyline([[xRightUp.x, xRightUp.y], [xRightDown.x, xRightDown.y], [xRightArrow.x, xRightArrow.y]]).fill(this._color.coordinator);
+
+    let xTextPos = this.toSVGPoint({
+      x: width / 2 - this._config.padding,
+      y: 20,
+    });
+    this._svgDrawing.text('X').font(this._color.textStyle).move(xTextPos.x, xTextPos.y);
 
     for (let dx = -50; dx > -width / 2 + this._config.padding; dx -= 50) {
-      // dx < width / 2 - this._config.padding;
-      let dxText = new paper.PointText(this.toPaperPoint({
+      const textPos = this.toSVGPoint({
         x: dx,
         y: -25
-      }));
-      dxText.justification = 'center';
-      dxText.fillColor = this._color.coordinator;
-      dxText.content = dx;
+      });
+      this._svgDrawing.text(dx.toString()).font(this._color.textStyle).move(textPos.x, textPos.y);
 
-      let path = new paper.Path();
       let length = (dx % 100) === 0 ? 10 : 5;
-      path.strokeColor = this._color.coordinator;
-      path.add(this.toPaperPoint({
+      const from = this.toSVGPoint({
         x: dx,
         y: -length,
-      }));
-      path.add(this.toPaperPoint({
+      });
+      const to = this.toSVGPoint({
         x: dx,
         y: 0,
-      }));
+      });
+      this._svgDrawing.line(from.x, from.y, to.x, to.y).stroke(this._color.lineStyle);
     }
     for (let dx = 50; dx < width / 2 - this._config.padding; dx += 50) {
-      let dxText = new paper.PointText(this.toPaperPoint({
+      const textPos = this.toSVGPoint({
         x: dx,
         y: -25
-      }));
-      dxText.justification = 'center';
-      dxText.fillColor = this._color.coordinator;
-      dxText.content = dx;
+      });
+      this._svgDrawing.text(dx.toString()).font(this._color.textStyle).move(textPos.x, textPos.y);
 
-      let path = new paper.Path();
       let length = (dx % 100) === 0 ? 10 : 5;
-      path.strokeColor = this._color.coordinator;
-      path.add(this.toPaperPoint({
+      const from = this.toSVGPoint({
         x: dx,
         y: -length,
-      }));
-      path.add(this.toPaperPoint({
+      });
+      const to = this.toSVGPoint({
         x: dx,
         y: 0,
-      }));
+      });
+      this._svgDrawing.line(from.x, from.y, to.x, to.y).stroke(this._color.lineStyle);
     }
 
     // height
-    let vpath = new paper.Path();
-    vpath.strokeColor = this._color.coordinator;
-    vpath.add(this.toPaperPoint({
+    let bottomY = this.toSVGPoint({
       x: 0,
       y: -height / 2 + this._config.padding,
-    }));
-    vpath.add(this.toPaperPoint({
+    });
+    let topY = this.toSVGPoint({
       x: 0,
       y: height / 2 - this._config.padding - 18,
-    }));
-    vpath.add(this.toPaperPoint({
+    });
+    this._svgDrawing.line(bottomY.x, bottomY.y, topY.x, topY.y).stroke(this._color.lineStyle);
+
+    let yRight = this.toSVGPoint({
       x: 6,
       y: height / 2 - this._config.padding - 18,
-    }));
-    vpath.add(this.toPaperPoint({
+    });
+    let yArrow = this.toSVGPoint({
       x: 0,
       y: height / 2 - this._config.padding,
-    }));
-    vpath.add(this.toPaperPoint({
+    });
+    let yLeft = this.toSVGPoint({
       x: -6,
       y: height / 2 - this._config.padding - 18,
-    }));
-    vpath.add(this.toPaperPoint({
-      x: 6,
-      y: height / 2 - this._config.padding - 18,
-    }));
-    let vtext = new paper.PointText(this.toPaperPoint({
+    });
+
+    this._svgDrawing.polyline([[yLeft.x, yLeft.y], [yRight.x, yRight.y], [yArrow.x, yArrow.y]]).fill(this._color.coordinator);
+
+    let yTextPos = this.toSVGPoint({
       x: 20,
       y: height / 2 - this._config.padding
-    }));
-    vtext.justification = 'center';
-    vtext.fillColor = this._color.coordinator;
-    vtext.content = 'y';
+    });
+    this._svgDrawing.text('Y').font(this._color.textStyle).move(yTextPos.x, yTextPos.y);
 
     for (let dy = -50; dy > -height / 2 + this._config.padding; dy -= 50) {
-      let dyText = new paper.PointText(this.toPaperPoint({
+      const textPos = this.toSVGPoint({
         x: -25,
         y: dy - 4
-      }));
-      dyText.justification = 'center';
-      dyText.fillColor = this._color.coordinator;
-      dyText.content = dy;
+      });
+      this._svgDrawing.text(dy.toString()).font(this._color.textStyle).move(textPos.x, textPos.y);
 
-      let path = new paper.Path();
       let length = (dy % 100) === 0 ? 10 : 5;
-      path.strokeColor = this._color.coordinator;
-      path.add(this.toPaperPoint({
+      const from = this.toSVGPoint({
         x: -length,
         y: dy,
-      }));
-      path.add(this.toPaperPoint({
+      });
+      const to = this.toSVGPoint({
         x: 0,
         y: dy,
-      }));
+      });
+      this._svgDrawing.line(from.x, from.y, to.x, to.y).stroke(this._color.lineStyle);
     }
     for (let dy = 50; dy < height / 2 - this._config.padding; dy += 50) {
-      let dyText = new paper.PointText(this.toPaperPoint({
+      const textPos = this.toSVGPoint({
         x: -25,
         y: dy - 4
-      }));
-      dyText.justification = 'center';
-      dyText.fillColor = this._color.coordinator;
-      dyText.content = dy;
+      });
+      this._svgDrawing.text(dy.toString()).font(this._color.textStyle).move(textPos.x, textPos.y);
 
-      let path = new paper.Path();
       let length = (dy % 100) === 0 ? 10 : 5;
-      path.strokeColor = this._color.coordinator;
-      path.add(this.toPaperPoint({
+      const from = this.toSVGPoint({
         x: -length,
         y: dy,
-      }));
-      path.add(this.toPaperPoint({
+      });
+      const to = this.toSVGPoint({
         x: 0,
         y: dy,
-      }));
+      });
+      this._svgDrawing.line(from.x, from.y, to.x, to.y).stroke(this._color.lineStyle);
     }
   }
 
@@ -210,38 +180,47 @@ export default class PaperCanvasApp {
   }
 
   refresh() {
-    this._pathLayer.activate();
-    this._pathLayer.removeChildren();
     let sourcePath = this.editablePath.allRawPoints();
+    let svgPolylineData = [];
     for (let i = 0; i < sourcePath.length; i++) {
       let ptFrom = sourcePath[i];
       let ptTo = sourcePath[(i + 1) % sourcePath.length];
-      let path = new paper.Path();
-      path.strokeColor = this._color.line;
-      path.add(this.toPaperPoint({
+      ptFrom = this.toSVGPoint({
         x: ptFrom.x,
         y: ptFrom.y,
-      }));
-      path.add(this.toPaperPoint({
+      });
+      svgPolylineData.push([ptFrom.x, ptFrom.y]);
+      ptTo = this.toSVGPoint({
         x: ptTo.x,
         y: ptTo.y,
-      }));
+      });
+      svgPolylineData.push([ptTo.x, ptTo.y]);
     }
+    this._svgDrawing.polyline(svgPolylineData).fill(this._color.path).stroke(this._color.pathStyle);
 
     // point itself
-    this._pointLayer.activate();
-    this._pointLayer.removeChildren();
     sourcePath = this.editablePath.allControlPoints();
     for (let i = 0; i < sourcePath.length; i++) {
       let pt = sourcePath[i];
-      let myCircle = new paper.Path.Circle(this.toPaperPoint({
+      let circlePos = this.toSVGPoint({
         x: pt.x,
         y: pt.y,
-      }), 5);
-      myCircle.fillColor = this._color.pointNormal;
-      myCircle.tag = 'point';
-      myCircle.userData = pt.EditablePoint;
+      });
+      const pointElement = this._svgDrawing.circle(this._color.pointR).fill(this._color.pointStyle);
+      pointElement.move(circlePos.x - this._color.pointR / 2, circlePos.y - this._color.pointR / 2);
+      pointElement.mouseout(e => this.onPointMouseOut(e));
+      pointElement.mouseover(e => this.onPointMouseMove(e));
+      pointElement.node.userData = pt;
     }
+  }
+
+  onPointMouseOut(e) {
+    console.log('onPointMouseOut ' + e.currentTarget.userData);
+  }
+
+  onPointMouseMove(e) {
+    e.currentTarget.style.fill = '#f06';
+    console.log('onPointMouseMove ' + e.currentTarget.userData);
   }
 
   onCanvasMouseDown(e) {
@@ -284,10 +263,11 @@ export default class PaperCanvasApp {
     console.log('mouse up');
   }
 
-  toPaperPoint(pt) {
-    return new paper.Point(
-      pt.x + this._config.width / 2,
-      -pt.y + this._config.height / 2);
+  toSVGPoint(pt) {
+    return {
+      x: pt.x + this._config.width / 2,
+      y: -pt.y + this._config.height / 2,
+    };
   }
 
   toPathPoint(paperPoint) {

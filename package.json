@@ -10,6 +10,7 @@
     "react-dom": "^16.6.3",
     "react-scripts": "^2.1.1",
     "shortid": "^2.2.14",
+    "svg.js": "^2.7.1",
     "three": "^0.89.0",
     "three-trackballcontrols": "0.0.7",
     "threejs-transformcontrols": "^0.83.0"
